@@ -29,7 +29,7 @@ cd backend && npm install && npm run seed && npm run dev
 cd frontend && npm install && npm run dev
 ```
 
-Backend: http://localhost:5000 · Frontend: http://localhost:5173 (đăng nhập `central` / `123456`).
+Backend: https://blood-donation-9bs0.onrender.com · Frontend: http://localhost:5173 (đăng nhập `central` / `123456`).
 
 ## Trạng thái tiến độ
 

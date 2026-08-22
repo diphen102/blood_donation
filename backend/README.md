@@ -16,7 +16,7 @@ npm run dev      # có nodemon, tự reload
 npm start
 ```
 
-Server chạy tại `http://localhost:5000`, kiểm tra nhanh: `GET /api/health`.
+Server chạy tại `https://blood-donation-9bs0.onrender.com`, kiểm tra nhanh: `GET /api/health`.
 
 ## Tạo dữ liệu mẫu để test
 

@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "Blood Donation API - Tuan 3 (Backend + Database)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token_admin", "value": "" },
+    { "key": "token_central", "value": "" },
+    { "key": "token_hospital", "value": "" },
+    { "key": "token_donor", "value": "" },
+    { "key": "donorId", "value": "" },
+    { "key": "hospitalId", "value": "" },
+    { "key": "donationId", "value": "" },
+    { "key": "bloodUnitId", "value": "" },
+    { "key": "bloodRequestId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "00 - Health Check",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "Login admin (seed)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "pm.collectionVariables.set('token_admin', data.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Login central (seed)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "pm.collectionVariables.set('token_central', data.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"central\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Login hospital1 (seed)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "pm.collectionVariables.set('token_hospital', data.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"hospital1\",\n  \"password\": \"123456\"\n}" }
+          }
+        },
+        {
+          "name": "Register DONOR moi - khop CCCD+SDT voi seed (se duoc lien ket)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "pm.collectionVariables.set('token_donor', data.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"donor_new\",\n  \"password\": \"123456\",\n  \"cccd\": \"079123456789\",\n  \"phone\": \"0901234567\"\n}" }
+          }
+        },
+        {
+          "name": "Register DONOR moi - khong khop (chua co ho so)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"donor_unlinked\",\n  \"password\": \"123456\",\n  \"cccd\": \"001199001122\",\n  \"phone\": \"0909998888\"\n}" }
+          }
+        },
+        {
+          "name": "Get Me (donor)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_donor}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Donor (CENTRAL)",
+      "item": [
+        {
+          "name": "List Donors",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/donors"
+          }
+        },
+        {
+          "name": "Create Donor",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "if (data._id) pm.collectionVariables.set('donorId', data._id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/donors",
+            "body": { "mode": "raw", "raw": "{\n  \"cccd\": \"079988776655\",\n  \"fullName\": \"Trần Thị B\",\n  \"phone\": \"0912345678\",\n  \"bloodGroup\": \"A+\",\n  \"birthDate\": \"2000-01-15\"\n}" }
+          }
+        },
+        {
+          "name": "Get Donor by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/donors/{{donorId}}"
+          }
+        },
+        {
+          "name": "Update Donor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/donors/{{donorId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"0912345679\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Donor",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/donors/{{donorId}}"
+          }
+        },
+        {
+          "name": "Forbidden - HOSPITAL cố truy cập Donor (kỳ vọng 403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_hospital}}" }],
+            "url": "{{baseUrl}}/donors"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Donation (CENTRAL + DONOR)",
+      "item": [
+        {
+          "name": "Create Donation (dùng donorId từ bước seed - donor1)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "if (data._id) pm.collectionVariables.set('donationId', data._id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/donations",
+            "body": { "mode": "raw", "raw": "{\n  \"donorId\": \"__PASTE_DONOR_SEED_ID__\",\n  \"donationDate\": \"2026-07-20\",\n  \"location\": \"BVTW Huế\"\n}" }
+          }
+        },
+        {
+          "name": "List Donations (CENTRAL)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/donations"
+          }
+        },
+        {
+          "name": "My Donations (DONOR - FR-04)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_donor}}" }],
+            "url": "{{baseUrl}}/donations/mine"
+          }
+        },
+        {
+          "name": "Update Donation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/donations/{{donationId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"location\": \"BVTW Huế - Cơ sở 2\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Donation",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/donations/{{donationId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Hospital",
+      "item": [
+        {
+          "name": "List Hospitals (bất kỳ role nào đã đăng nhập)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_hospital}}" }],
+            "url": "{{baseUrl}}/hospitals"
+          }
+        },
+        {
+          "name": "Create Hospital (CENTRAL)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "if (data._id) pm.collectionVariables.set('hospitalId', data._id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/hospitals",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Bệnh viện Đa khoa Đà Nẵng\",\n  \"address\": \"124 Hải Phòng, Đà Nẵng\",\n  \"phone\": \"02363821118\"\n}" }
+          }
+        },
+        {
+          "name": "Update Hospital",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/hospitals/{{hospitalId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"02363821119\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Hospital",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/hospitals/{{hospitalId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - BloodUnit (CENTRAL)",
+      "item": [
+        {
+          "name": "Create BloodUnit (cần donationId hợp lệ)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "if (data._id) pm.collectionVariables.set('bloodUnitId', data._id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/blood-units",
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"BU-0001\",\n  \"bloodGroup\": \"O+\",\n  \"volume\": 350,\n  \"donationId\": \"__PASTE_DONATION_ID__\"\n}" }
+          }
+        },
+        {
+          "name": "List BloodUnits (lọc theo status)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/blood-units?status=COLLECTED"
+          }
+        },
+        {
+          "name": "Update BloodUnit status -> TESTED",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/blood-units/{{bloodUnitId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"TESTED\"\n}" }
+          }
+        },
+        {
+          "name": "Delete BloodUnit",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/blood-units/{{bloodUnitId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - BloodRequest (HOSPITAL tạo, CENTRAL duyệt)",
+      "item": [
+        {
+          "name": "Create BloodRequest (HOSPITAL - FR-16)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const data = pm.response.json();",
+            "if (data._id) pm.collectionVariables.set('bloodRequestId', data._id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_hospital}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/blood-requests",
+            "body": { "mode": "raw", "raw": "{\n  \"bloodGroup\": \"O+\",\n  \"quantity\": 5,\n  \"reason\": \"Cấp cứu tai nạn giao thông\"\n}" }
+          }
+        },
+        {
+          "name": "List of my Hospital (FR-17)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_hospital}}" }],
+            "url": "{{baseUrl}}/blood-requests"
+          }
+        },
+        {
+          "name": "List all (CENTRAL - FR-11)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/blood-requests"
+          }
+        },
+        {
+          "name": "Update status -> APPROVED (CENTRAL)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_central}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/blood-requests/{{bloodRequestId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" }
+          }
+        },
+        {
+          "name": "Forbidden - HOSPITAL cố duyệt yêu cầu (kỳ vọng 403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_hospital}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/blood-requests/{{bloodRequestId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}

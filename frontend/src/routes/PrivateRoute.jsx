@@ -1,0 +1,26 @@
+import { Navigate } from "react-router-dom";
+import { Spin } from "antd";
+import { useAuth } from "../context/AuthContext";
+
+// allowedRoles: mảng role được phép vào route này. Không truyền = chỉ cần đăng nhập, không giới hạn role.
+export default function PrivateRoute({ children, allowedRoles }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 100 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}

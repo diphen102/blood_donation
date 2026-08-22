@@ -4,6 +4,9 @@ const connectDB = require("./src/config/db");
 
 const PORT = process.env.PORT || 5000;
 
+const cors = require('cors');
+app.use(cors()); // Cho phép tất cả các nguồn truy cập API
+
 async function start() {
   try {
     await connectDB();

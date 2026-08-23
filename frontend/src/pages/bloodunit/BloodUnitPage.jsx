@@ -168,7 +168,7 @@ export default function BloodUnitPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Thêm mới</Button>
       </div>
 
-      <Card size="small" style={{ marginBottom: 16 }} title="Sẵn sàng sử dụng / điều phối đi bệnh viện khác (trạng thái STORED)">
+      <Card size="small" style={{ marginBottom: 16 }} title="Sẵn sàng sử dụng / điều phối đi bệnh viện khác">
         {!summary ? (
           <Typography.Text type="secondary">Đang tải...</Typography.Text>
         ) : availableTotal === 0 ? (
@@ -187,7 +187,7 @@ export default function BloodUnitPage() {
 
       <Input.Search
         allowClear
-        placeholder="Tìm theo mã đơn vị... (Enter để tìm)"
+        placeholder="Tìm theo mã đơn vị..."
         prefix={<SearchOutlined />}
         onSearch={handleSearch}
         className="app-search-input"

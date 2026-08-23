@@ -123,7 +123,7 @@ export default function HospitalBloodUnitPage() {
 
       <Input.Search
         allowClear
-        placeholder="Tìm theo mã đơn vị... (Enter để tìm)"
+        placeholder="Tìm theo mã đơn vị..."
         prefix={<SearchOutlined />}
         onSearch={handleSearch}
         className="app-search-input"

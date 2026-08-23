@@ -97,12 +97,12 @@ export default function UserPage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>Tạo tài khoản</Button>
       </div>
 
-      <Alert
+      {/* <Alert
         type="info"
         showIcon
         style={{ marginBottom: 16 }}
         message="Tài khoản DONOR tự đăng ký qua trang Đăng ký (liên kết CCCD), không tạo tay ở đây — nhưng vẫn quản lý được (khoá/mở, đặt lại mật khẩu) như mọi tài khoản khác trong bảng dưới. Lọc cột Vai trò = DONOR để xem riêng."
-      />
+      /> */}
 
       <Table rowKey="_id" columns={columns} dataSource={data} loading={loading} scroll={{ x: "max-content" }} pagination={{ pageSize: 10 }} />
 

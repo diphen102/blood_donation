@@ -68,10 +68,10 @@ export default function Login() {
 
           <Form layout="vertical" onFinish={onFinish}>
             <Form.Item name="username" label="Tên đăng nhập" rules={[{ required: true, message: "Vui lòng nhập tên đăng nhập" }]}>
-              <Input prefix={<UserOutlined style={{ color: "#9CA3AF" }} />} placeholder="username" autoFocus />
+              <Input prefix={<UserOutlined style={{ color: "#9CA3AF" }} />} placeholder="" autoFocus />
             </Form.Item>
             <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}>
-              <Input.Password prefix={<LockOutlined style={{ color: "#9CA3AF" }} />} placeholder="••••••••" />
+              <Input.Password prefix={<LockOutlined style={{ color: "#9CA3AF" }} />} placeholder="" />
             </Form.Item>
             <Form.Item style={{ marginBottom: 0, marginTop: 20 }}>
               <Button type="primary" htmlType="submit" block loading={submitting}>

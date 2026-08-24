@@ -5,19 +5,19 @@ const asyncHandler = require("../utils/asyncHandler");
 const { BLOOD_UNIT_STATUS } = require("../utils/constants");
 const { notifyDonorOfBloodUnitStatus, notifyCentralOfBloodUnitEvent } = require("../utils/notifyDonor");
 
-// Chỉ giữ lại phần ngày/tháng/năm, bỏ giờ:phút:giây (theo yêu cầu chỉ cần lưu ngày cho mỗi bước hành trình)
+// Chỉ giữ lại phần ngày/tháng/năm, bỏ giờ:phút:giây
 function dateOnly(input) {
   const d = input ? new Date(input) : new Date();
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-// GET /api/blood-units?status=&bloodGroup=&hospitalId=&search=&page=&limit=
-// CENTRAL (FR-09): xem toàn bộ kho. HOSPITAL (FR-19): chỉ xem tại bệnh viện mình.
-// Có phân trang ở tầng DB (không tải hết về trình duyệt) - cần thiết khi kho có hàng nghìn đơn vị.
+// GET /api/blood-units?status=&bloodGroup=&donationType=&hospitalId=&search=&page=&limit=
+// CENTRAL: xem toàn bộ kho. HOSPITAL: chỉ xem tại bệnh viện mình.
 const getBloodUnits = asyncHandler(async (req, res) => {
   const filter = {};
   if (req.query.status) filter.status = req.query.status;
   if (req.query.bloodGroup) filter.bloodGroup = req.query.bloodGroup;
+  if (req.query.donationType) filter.donationType = req.query.donationType;
   if (req.query.search) filter.code = { $regex: req.query.search, $options: "i" };
 
   if (req.user.role === "HOSPITAL") {
@@ -28,7 +28,7 @@ const getBloodUnits = asyncHandler(async (req, res) => {
   }
 
   const page = Math.max(parseInt(req.query.page) || 1, 1);
-  const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 200); // chặn limit quá lớn để tránh lạm dụng
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 200);
 
   const [items, total] = await Promise.all([
     BloodUnit.find(filter)
@@ -44,12 +44,12 @@ const getBloodUnits = asyncHandler(async (req, res) => {
 });
 
 // GET /api/blood-units/summary?hospitalId=
-// Tổng hợp số lượng theo nhóm máu + trạng thái, tính bằng MongoDB aggregation (không tải hết record về).
+// Tổng hợp số lượng theo nhóm máu + LOẠI CHẾ PHẨM (donationType) + trạng thái, tính bằng MongoDB
+// aggregation. Trả về dạng lồng: { [bloodGroup]: { [donationType]: { [status]: count } } } -
+// tách rõ máu toàn phần / tiểu cầu / huyết tương thay vì gộp chung theo nhóm máu.
 // CENTRAL: toàn bộ kho (hoặc lọc theo hospitalId nếu truyền). HOSPITAL: luôn tự lọc theo bệnh viện mình.
 const getBloodUnitSummary = asyncHandler(async (req, res) => {
   const match = {};
-  // QUAN TRỌNG: aggregate() không tự ép kiểu như find(), phải tự new mongoose.Types.ObjectId()
-  // nếu không currentHospital (ObjectId thật trong DB) sẽ không bao giờ khớp với string từ JWT.
   if (req.user.role === "HOSPITAL") {
     if (!req.user.hospitalId) return res.status(200).json({});
     match.currentHospital = new mongoose.Types.ObjectId(req.user.hospitalId);
@@ -59,15 +59,20 @@ const getBloodUnitSummary = asyncHandler(async (req, res) => {
 
   const rows = await BloodUnit.aggregate([
     { $match: match },
-    { $group: { _id: { bloodGroup: "$bloodGroup", status: "$status" }, count: { $sum: 1 } } },
+    {
+      $group: {
+        _id: { bloodGroup: "$bloodGroup", donationType: "$donationType", status: "$status" },
+        count: { $sum: 1 },
+      },
+    },
   ]);
 
-  // Gom về dạng { "A+": { STORED: 3, RECEIVED: 2, USED: 10, ... }, "O+": {...} }
   const summary = {};
   rows.forEach((r) => {
-    const { bloodGroup, status } = r._id;
+    const { bloodGroup, donationType, status } = r._id;
     if (!summary[bloodGroup]) summary[bloodGroup] = {};
-    summary[bloodGroup][status] = r.count;
+    if (!summary[bloodGroup][donationType]) summary[bloodGroup][donationType] = {};
+    summary[bloodGroup][donationType][status] = r.count;
   });
 
   res.status(200).json(summary);
@@ -87,7 +92,7 @@ const getBloodUnitById = asyncHandler(async (req, res) => {
 });
 
 // GET /api/blood-units/for-donation/:donationId
-// DONOR xem hành trình đơn vị máu bắt nguồn từ chính lần hiến máu của mình (chỉ xem, không sửa được).
+// DONOR xem hành trình đơn vị máu bắt nguồn từ chính lần hiến máu của mình.
 // CENTRAL xem được mọi donationId.
 const getBloodUnitsForDonation = asyncHandler(async (req, res) => {
   const donation = await Donation.findById(req.params.donationId);
@@ -101,16 +106,18 @@ const getBloodUnitsForDonation = asyncHandler(async (req, res) => {
   res.status(200).json(units);
 });
 
-// POST /api/blood-units  (mục 4.2 báo cáo tuần 2 - bước "Hệ thống tạo BloodUnit")
+// POST /api/blood-units
 // Body tối thiểu: { code, bloodGroup, volume, donationId }
+// Body tuỳ chọn: { donationType } - mặc định WHOLE_BLOOD nếu không truyền.
 const createBloodUnit = asyncHandler(async (req, res) => {
-  const { code, bloodGroup, volume, donationId, status } = req.body;
+  const { code, bloodGroup, volume, donationId, status, donationType } = req.body;
   const initialStatus = status || "COLLECTED";
   const unit = await BloodUnit.create({
     code,
     bloodGroup,
     volume,
     donationId,
+    donationType: donationType || "WHOLE_BLOOD",
     status: initialStatus,
     statusHistory: [{ status: initialStatus, date: dateOnly(new Date()) }],
   });
@@ -118,11 +125,6 @@ const createBloodUnit = asyncHandler(async (req, res) => {
 });
 
 // PUT /api/blood-units/:id
-// Cho phép cập nhật mọi field cơ bản (CRUD thuần tuý của tuần 3), cộng thêm:
-// - testResult/testFailReason/testRecommendation (kết quả xét nghiệm)
-// - department (khoa sử dụng, khi status = USED)
-// - tự động ghi lại statusHistory (chỉ ngày, không giờ) mỗi khi status thay đổi
-// Lưu ý: nghiệp vụ điều phối/duyệt yêu cầu có kiểm soát chặt sẽ hoàn thiện ở tuần 5.
 const updateBloodUnit = asyncHandler(async (req, res) => {
   if (req.body.status && !BLOOD_UNIT_STATUS.includes(req.body.status)) {
     return res.status(400).json({ message: `Trạng thái không hợp lệ. Chỉ nhận: ${BLOOD_UNIT_STATUS.join(", ")}` });
@@ -132,7 +134,7 @@ const updateBloodUnit = asyncHandler(async (req, res) => {
   if (!current) return res.status(404).json({ message: "Không tìm thấy BloodUnit." });
 
   const updateOps = { $set: { ...req.body } };
-  delete updateOps.$set.statusHistory; // không cho ghi đè trực tiếp qua body, chỉ hệ thống tự thêm
+  delete updateOps.$set.statusHistory;
 
   if (req.body.status && req.body.status !== current.status) {
     updateOps.$push = { statusHistory: { status: req.body.status, date: dateOnly(req.body.statusDate) } };
@@ -145,16 +147,13 @@ const updateBloodUnit = asyncHandler(async (req, res) => {
   });
 
   if (req.body.status && req.body.status !== current.status) {
-    notifyDonorOfBloodUnitStatus(unit, req.body.status); // không await - không để lỗi gửi thông báo chặn response
+    notifyDonorOfBloodUnitStatus(unit, req.body.status);
   }
 
   res.status(200).json(unit);
 });
 
-// PUT /api/blood-units/:id/use  (HOSPITAL đánh dấu đã sử dụng cho bệnh nhân)
-// Đóng luồng: chỉ hospital đang giữ đơn vị máu (currentHospital) và đang ở trạng thái RECEIVED
-// mới được đánh dấu USED. Tự động thông báo cho DONOR (đã có) và tất cả tài khoản CENTRAL (mới)
-// để CENTRAL luôn biết đơn vị máu đã thực sự được dùng, không phải đoán qua trạng thái RECEIVED mãi.
+// PUT /api/blood-units/:id/use
 const useBloodUnit = asyncHandler(async (req, res) => {
   const unit = await BloodUnit.findById(req.params.id);
   if (!unit) return res.status(404).json({ message: "Không tìm thấy BloodUnit." });
@@ -171,7 +170,7 @@ const useBloodUnit = asyncHandler(async (req, res) => {
   unit.statusHistory.push({ status: "USED", date: dateOnly(new Date()) });
   await unit.save();
 
-  notifyDonorOfBloodUnitStatus(unit, "USED"); // báo cho DONOR
+  notifyDonorOfBloodUnitStatus(unit, "USED");
   notifyCentralOfBloodUnitEvent(
     unit,
     req.user,
@@ -182,10 +181,7 @@ const useBloodUnit = asyncHandler(async (req, res) => {
   res.status(200).json(unit);
 });
 
-// PUT /api/blood-units/:id/discard  (HOSPITAL tự huỷ đơn vị máu gặp sự cố tại viện - hết hạn, hư hỏng...)
-// Trước đây chỉ CENTRAL mới đổi được sang DISCARDED, khiến mọi sự cố tại bệnh viện đều phải
-// báo qua CENTRAL xử lý hộ. Giờ HOSPITAL tự xử lý được với đơn vị đang ở viện mình, có ghi lý do,
-// vẫn tự động thông báo cho CENTRAL biết (không phải "im lặng" xử lý).
+// PUT /api/blood-units/:id/discard
 const discardBloodUnit = asyncHandler(async (req, res) => {
   const { reason } = req.body;
   if (!reason) return res.status(400).json({ message: "Cần nhập lý do huỷ." });

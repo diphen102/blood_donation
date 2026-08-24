@@ -3,6 +3,7 @@ import { Typography, Table, Tag, Button, Input, Card, Row, Col, Modal, Space } f
 import { SearchOutlined, NodeIndexOutlined } from "@ant-design/icons";
 import { bloodUnitApi } from "../../api/resourceApis";
 import { ALL_STATUS_OPTIONS } from "../../constants/bloodUnitStatus";
+import { DONATION_TYPE_LABELS, DONATION_TYPE_OPTIONS } from "../../constants/donationType";
 import BloodUnitJourney from "../../components/BloodUnitJourney";
 import UseBloodUnitModal from "../../components/UseBloodUnitModal";
 import DiscardBloodUnitModal from "../../components/DiscardBloodUnitModal";
@@ -18,6 +19,7 @@ export default function HospitalBloodUnitPage() {
   const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState(undefined);
   const [bloodGroupFilter, setBloodGroupFilter] = useState(undefined);
+  const [donationTypeFilter, setDonationTypeFilter] = useState(undefined);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +31,7 @@ export default function HospitalBloodUnitPage() {
   function load() {
     setLoading(true);
     bloodUnitApi
-      .list({ page, limit: pageSize, status: statusFilter, bloodGroup: bloodGroupFilter, search: searchText || undefined })
+      .list({ page, limit: pageSize, status: statusFilter, bloodGroup: bloodGroupFilter, donationType: donationTypeFilter, search: searchText || undefined })
       .then((res) => {
         setData(res.data.items);
         setTotal(res.data.total);
@@ -41,7 +43,7 @@ export default function HospitalBloodUnitPage() {
     bloodUnitApi.summary().then((res) => setSummary(summarizeFromAggregation(res.data)));
   }
 
-  useEffect(load, [page, pageSize, statusFilter, bloodGroupFilter, searchText]);
+  useEffect(load, [page, pageSize, statusFilter, bloodGroupFilter, donationTypeFilter, searchText]);
   useEffect(loadSummary, []);
 
   function refreshAfterAction() {
@@ -54,6 +56,7 @@ export default function HospitalBloodUnitPage() {
     setPageSize(pagination.pageSize);
     setStatusFilter(filters.status?.[0]);
     setBloodGroupFilter(filters.bloodGroup?.[0]);
+    setDonationTypeFilter(filters.donationType?.[0]);
   }
 
   function handleSearch(value) {
@@ -61,7 +64,10 @@ export default function HospitalBloodUnitPage() {
     setSearchText(value);
   }
 
-  const totalAtHospital = summary ? Object.values(summary).reduce((sum, g) => sum + g.total, 0) : 0;
+  // summary: { bloodGroup: { donationType: { available, total } } }
+  const totalAtHospital = summary
+    ? Object.values(summary).reduce((sum, byType) => sum + Object.values(byType).reduce((s, v) => s + v.total, 0), 0)
+    : 0;
 
   const columns = [
     { title: "Mã đơn vị", dataIndex: "code" },
@@ -69,6 +75,12 @@ export default function HospitalBloodUnitPage() {
       title: "Nhóm máu", dataIndex: "bloodGroup",
       filters: BLOOD_GROUP_OPTIONS.map((o) => ({ text: o.label, value: o.value })),
       filterMultiple: false,
+    },
+    {
+      title: "Loại hiến", dataIndex: "donationType",
+      filters: DONATION_TYPE_OPTIONS.map((o) => ({ text: o.label, value: o.value })),
+      filterMultiple: false,
+      render: (t) => DONATION_TYPE_LABELS[t] || t,
     },
     { title: "Thể tích (ml)", dataIndex: "volume" },
     {
@@ -108,11 +120,17 @@ export default function HospitalBloodUnitPage() {
         ) : (
           <>
             <Row gutter={[12, 8]}>
-              {Object.entries(summary)
-                .filter(([, { available }]) => available > 0)
-                .map(([group, { available }]) => (
-                  <Col key={group}><Tag color="#8E2430" style={{ fontSize: 14, padding: "4px 12px" }}>{group}: {available}</Tag></Col>
-                ))}
+              {Object.entries(summary).flatMap(([group, byType]) =>
+                Object.entries(byType)
+                  .filter(([, { available }]) => available > 0)
+                  .map(([type, { available }]) => (
+                    <Col key={`${group}-${type}`}>
+                      <Tag color="#8E2430" style={{ fontSize: 14, padding: "4px 12px" }}>
+                        {group} · {DONATION_TYPE_LABELS[type] || type}: {available}
+                      </Tag>
+                    </Col>
+                  ))
+              )}
             </Row>
             <Typography.Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 8 }}>
               Tổng cộng {totalAtHospital} đơn vị từng qua bệnh viện (kể cả đã sử dụng/huỷ).

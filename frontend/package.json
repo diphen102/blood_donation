@@ -1,7 +1,7 @@
 {
   "name": "blood-donation-frontend",
   "version": "1.0.0",
-  "description": "Frontend ReactJS - He thong Quan ly Hien mau (Tuan 4: Login, Routing, Phan quyen, Dashboard co ban, CRUD Donor/Donation/Hospital/BloodUnit)",
+  "description": "Frontend ReactJS - He thong Quan ly Hien mau",
   "type": "module",
   "scripts": {
     "dev": "vite",

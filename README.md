@@ -13,8 +13,8 @@ Nếu không dùng file workspace, có thể mở trực tiếp thư mục gốc
 ```
 .
 ├── BloodDonation.code-workspace
-├── backend/     (Tuần 3 - NodeJS + Express + MongoDB + JWT)
-└── frontend/    (Tuần 4 - ReactJS + Vite + Ant Design)
+├── backend/     (NodeJS + Express + MongoDB + JWT)
+└── frontend/    (ReactJS + Vite + Ant Design)
 ```
 
 Chi tiết cài đặt/chạy từng phần xem README.md riêng trong mỗi thư mục.
@@ -29,10 +29,15 @@ cd backend && npm install && npm run seed && npm run dev
 cd frontend && npm install && npm run dev
 ```
 
-Backend: https://blood-donation-9bs0.onrender.com · Frontend: http://localhost:5173 (đăng nhập `central` / `123456`).
+Backend: http://localhost:5000 · Frontend: http://localhost:5173 (đăng nhập `central` / `123456`).
+
+## Cập nhật gần nhất (sau review)
+
+- **Đổi mật khẩu tự phục vụ**: `PUT /api/auth/change-password` — mọi role tự đổi mật khẩu của mình, tách biệt với chức năng ADMIN reset mật khẩu tạm cho người khác đã có sẵn.
+- **Tách tồn kho theo loại chế phẩm hiến máu** (Toàn phần / Tiểu cầu / Huyết tương): `BloodUnit` nay có field `donationType` (denormalize từ `Donation.donationType`, giống cách `bloodGroup` đã denormalize từ `Donor`). `GET /blood-units/summary` trả về dạng lồng `{bloodGroup: {donationType: {status: count}}}` thay vì gộp chung theo nhóm máu. Nếu đã có dữ liệu cũ trong MongoDB, chạy `npm run backfill:donation-type` ở `backend/` một lần để vá field này cho các BloodUnit tạo trước thay đổi.
 
 ## Trạng thái tiến độ
 
-- Tuần 2: Phân tích yêu cầu (đã duyệt).
-- Tuần 3: Backend + Database (đã cài đặt, **chưa test thực tế** — cần chạy trên máy có mạng + MongoDB để xác nhận. 2 điểm cần bạn xác nhận: field bloodRequestId/assignedUnits, và việc cài sớm liên kết CCCD — xem báo cáo Tuần 3).
-- Tuần 4: Frontend ReactJS (đã cài đặt trước lịch — cần bạn xác nhận có giữ hay để làm lại đúng tuần).
+- Backend + Database: đã cài đặt.
+- Frontend ReactJS: đã cài đặt.
+- Cần tự chạy trên máy có mạng + MongoDB để test thực tế và chụp ảnh màn hình cho báo cáo.

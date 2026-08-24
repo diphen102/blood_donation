@@ -10,7 +10,6 @@ export function AuthProvider({ children }) {
   });
   const [loading, setLoading] = useState(true);
 
-  // Khi mở lại app mà đã có token -> gọi /auth/me để xác nhận token còn sống
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -37,7 +36,6 @@ export function AuthProvider({ children }) {
     return res.data.user;
   }
 
-  // Dùng chung cho login và register - cả 2 endpoint đều trả về { token, user } cùng shape.
   function setUserFromAuthResponse(data) {
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));

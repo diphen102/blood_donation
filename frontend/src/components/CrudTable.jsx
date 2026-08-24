@@ -4,18 +4,9 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from "@ant
 import dayjs from "dayjs";
 
 /**
- * Component CRUD dùng chung cho Donor / Donation / Hospital / BloodUnit (tuần 4).
- * Cả 4 module đều theo đúng 1 khuôn mẫu: bảng danh sách + modal thêm/sửa + xoá có xác nhận,
+ * Component CRUD dùng chung cho Donor / Donation / Hospital / BloodUnit.
+ * Cả các module đều theo đúng 1 khuôn mẫu: bảng danh sách + modal thêm/sửa + xoá có xác nhận,
  * nên gom về đây để không lặp code, mỗi trang chỉ cần khai báo columns + formFields riêng.
- *
- * props:
- *  - title: tên hiển thị (VD: "Người hiến máu")
- *  - api: { list, create, update, remove }
- *  - columns: cột hiển thị trên Table (chuẩn antd Table columns) — column có thể khai báo
- *    thêm `filters` + `onFilter` theo chuẩn antd để lọc theo giá trị cụ thể (VD: trạng thái).
- *  - formFields: [{ name, label, type: 'text'|'number'|'date'|'select', options, rules }]
- *  - searchableFields: (tuần 6) mảng tên field dùng để tìm kiếm nhanh (hỗ trợ field lồng
- *    dạng "donorId.fullName" cho các field đã được backend populate).
  */
 export default function CrudTable({ title, api, columns, formFields, searchableFields = [] }) {
   const [data, setData] = useState([]);
@@ -54,8 +45,6 @@ export default function CrudTable({ title, api, columns, formFields, searchableF
       if (f.type === "date" && formValues[f.name]) {
         formValues[f.name] = dayjs(formValues[f.name]);
       }
-      // Field tham chiếu (donorId, currentHospital...) có thể đã được backend populate
-      // thành object -> Select cần giá trị là _id (string), không phải cả object.
       if (f.type === "select" && formValues[f.name] && typeof formValues[f.name] === "object") {
         formValues[f.name] = formValues[f.name]._id;
       }
@@ -94,7 +83,7 @@ export default function CrudTable({ title, api, columns, formFields, searchableF
       setModalOpen(false);
       loadData();
     } catch (err) {
-      if (err?.errorFields) return; // lỗi validate form, không cần toast
+      if (err?.errorFields) return;
       message.error(err.response?.data?.message || "Có lỗi xảy ra.");
     }
   }

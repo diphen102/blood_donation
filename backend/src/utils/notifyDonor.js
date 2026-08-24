@@ -36,17 +36,15 @@ const MESSAGES = {
         },
 };
 
-// Gọi sau khi 1 BloodUnit đổi sang status mới. Không throw lỗi ra ngoài nếu thất bại
-// (việc gửi thông báo không nên làm hỏng luồng chính cập nhật trạng thái đơn vị máu).
 async function notifyDonorOfBloodUnitStatus(unit, status) {
   try {
-    if (!MESSAGES[status]) return; // COLLECTED không cần thông báo (donor vừa hiến xong, đã biết)
+    if (!MESSAGES[status]) return;
 
     const donation = await Donation.findById(unit.donationId);
     if (!donation) return;
 
     const user = await User.findOne({ donorId: donation.donorId, role: "DONOR" });
-    if (!user) return; // chưa có tài khoản liên kết -> không gửi được
+    if (!user) return;
 
     let hospitalName = null;
     if (unit.currentHospital) {
@@ -61,8 +59,6 @@ async function notifyDonorOfBloodUnitStatus(unit, status) {
   }
 }
 
-// Gọi khi HOSPITAL tự xử lý xong 1 sự kiện với BloodUnit (đã dùng, hoặc huỷ do sự cố...) -
-// báo cho MỌI tài khoản CENTRAL để trung tâm luôn nắm được, dù không phải người trực tiếp xử lý.
 async function notifyCentralOfBloodUnitEvent(unit, actingUser, title, content) {
   try {
     const centralUsers = await User.find({ role: "CENTRAL" });

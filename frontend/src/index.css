@@ -4,12 +4,10 @@ body {
   background: #F4F5F7;
 }
 
-/* Không dùng font trang trí riêng cho heading - phần mềm nghiệp vụ dùng 1 font thống nhất. */
 .app-heading {
   font-weight: 600;
 }
 
-/* ---- Card "lịch sử hiến máu" - làm phẳng, ít bo góc, ít hiệu ứng hơn bản trước ---- */
 .history-card {
   display: flex;
   align-items: center;
@@ -50,7 +48,6 @@ body {
   gap: 6px;
 }
 
-/* ---- Timeline "Hành trình đơn vị máu" ---- */
 .journey-timeline {
   list-style: none;
   margin: 0;
@@ -110,7 +107,6 @@ body {
   margin-top: 2px;
 }
 
-/* ---- Responsive ---- */
 .app-content {
   margin: 20px;
 }

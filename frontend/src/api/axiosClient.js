@@ -1,10 +1,9 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://blood-donation-9bs0.onrender.com/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
 });
 
-// Gắn token vào mọi request (nếu đã đăng nhập)
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -13,7 +12,6 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Nếu token hết hạn / không hợp lệ -> đá về trang login
 axiosClient.interceptors.response.use(
   (res) => res,
   (error) => {

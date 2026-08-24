@@ -1,16 +1,16 @@
 const Donor = require("../models/Donor");
 const asyncHandler = require("../utils/asyncHandler");
 
-// GET /api/donors/me  (FR-03 - DONOR xem hồ sơ cá nhân của chính mình)
+// GET /api/donors/me (DONOR xem hồ sơ cá nhân của chính mình)
 const getMyDonor = asyncHandler(async (req, res) => {
   if (!req.user.donorId) {
-    return res.status(200).json(null); // chưa liên kết hồ sơ Donor
+    return res.status(200).json(null);
   }
   const donor = await Donor.findById(req.user.donorId);
   res.status(200).json(donor);
 });
 
-// GET /api/donors  (FR-07 - CENTRAL)
+// GET /api/donors (CENTRAL)
 const getDonors = asyncHandler(async (req, res) => {
   const donors = await Donor.find().sort({ createdAt: -1 });
   res.status(200).json(donors);

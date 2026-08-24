@@ -14,10 +14,8 @@ const router = express.Router();
 
 router.use(authenticate);
 
-// FR-03: DONOR xem hồ sơ cá nhân của chính mình
 router.get("/me", authorize("DONOR"), getMyDonor);
 
-// FR-07: chỉ CENTRAL được quản lý Donor
 router.get("/", authorize("CENTRAL"), getDonors);
 router.get("/:id", authorize("CENTRAL"), getDonorById);
 router.post("/", authorize("CENTRAL"), createDonor);

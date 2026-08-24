@@ -5,7 +5,6 @@ const { getUsers, createUser, toggleActive, updateRole, resetPassword, deleteUse
 
 const router = express.Router();
 
-// FR-20, FR-21: chỉ ADMIN quản lý tài khoản
 router.use(authenticate, authorize("ADMIN"));
 
 router.get("/", getUsers);

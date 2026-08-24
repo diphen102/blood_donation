@@ -5,16 +5,9 @@ const bloodRequestSchema = new mongoose.Schema(
   {
     hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital", required: true },
     bloodGroup: { type: String, enum: BLOOD_GROUPS, required: true },
-    quantity: { type: Number, required: true, min: 1 }, // số đơn vị máu cần
+    quantity: { type: Number, required: true, min: 1 },
     reason: { type: String, required: true, trim: true },
-
-    status: {
-      type: String,
-      enum: BLOOD_REQUEST_STATUS,
-      default: "PENDING",
-    },
-
-    // Danh sách BloodUnit đã điều phối cho yêu cầu này (mục 4.3 báo cáo tuần 2)
+    status: { type: String, enum: BLOOD_REQUEST_STATUS, default: "PENDING" },
     assignedUnits: [{ type: mongoose.Schema.Types.ObjectId, ref: "BloodUnit" }],
   },
   { timestamps: true }

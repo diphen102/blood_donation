@@ -12,7 +12,6 @@ function authenticate(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    // payload chứa: id, role, donorId, hospitalId (được ký lúc login)
     req.user = payload;
     next();
   } catch (err) {

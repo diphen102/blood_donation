@@ -1,4 +1,4 @@
-# Blood Donation Backend — Tuần 3
+# Blood Donation Backend
 
 ## Cài đặt
 
@@ -16,7 +16,7 @@ npm run dev      # có nodemon, tự reload
 npm start
 ```
 
-Server chạy tại `https://blood-donation-9bs0.onrender.com`, kiểm tra nhanh: `GET /api/health`.
+Kiểm tra nhanh: `GET /api/health`.
 
 ## Tạo dữ liệu mẫu để test
 
@@ -24,7 +24,7 @@ Server chạy tại `https://blood-donation-9bs0.onrender.com`, kiểm tra nhanh
 npm run seed
 ```
 
-Tạo sẵn: 1 Donor (CCCD `079123456789`, SĐT `0901234567`), 1 Hospital, và 4 tài khoản (mật khẩu chung `123456`):
+Tạo sẵn: 4 Donor, 3 Hospital, và 6 tài khoản (mật khẩu chung `123456`):
 
 | username | role |
 |---|---|
@@ -35,23 +35,28 @@ Tạo sẵn: 1 Donor (CCCD `079123456789`, SĐT `0901234567`), 1 Hospital, và 4
 | donor1 | DONOR (đã liên kết sẵn với Donor mẫu) |
 | donor2 | DONOR (đã liên kết sẵn với Donor mẫu) |
 
-Kèm sẵn: 4 Donor, 3 Hospital, 5 Donation, 6 BloodUnit (đủ trạng thái), 2 BloodRequest (PENDING), 2 Notification, 2 Banner.
+Kèm sẵn: 5 Donation, 7 BloodUnit (đủ trạng thái + đủ loại chế phẩm), 2 BloodRequest (PENDING), 2 Notification, 2 Banner.
+
+## Nếu đã có dữ liệu cũ trong MongoDB
+
+BloodUnit tạo trước khi thêm field `donationType` sẽ mặc định bị gán `WHOLE_BLOOD` (theo schema default) dù có thể thực ra là tiểu cầu/huyết tương. Chạy 1 lần để vá lại đúng theo `Donation.donationType` gốc:
+
+```bash
+npm run backfill:donation-type
+```
 
 ## Module đã hoàn thành
 
-**Tuần 3:** Auth JWT, CRUD Donor/Donation/Hospital/BloodUnit/BloodRequest.
-**Tuần 5:** Notification (CRUD + gửi + đánh dấu đã đọc), Banner (CRUD), User management (ADMIN - FR-20/21), BloodRequest duyệt + điều phối tự động (`PUT /:id/decision`) + xác nhận nhận (`PUT /:id/receive`).
-**Bổ sung sau khi review:** kho máu cho HOSPITAL (`GET /blood-units` tự lọc theo bệnh viện), hồ sơ cá nhân cho DONOR (`GET /donors/me`), hành trình đơn vị máu theo lần hiến (`GET /blood-units/for-donation/:donationId`), kết quả xét nghiệm + trạng thái DISCARDED, khoa sử dụng, lịch sử ngày từng bước (`statusHistory`), và **thông báo tự động cho DONOR** mỗi khi đơn vị máu từ lần hiến của họ đổi trạng thái (xét nghiệm, lưu trữ, điều phối, tiếp nhận, sử dụng, huỷ) — xem `src/utils/notifyDonor.js`.
+Auth JWT (đăng ký/đăng nhập/`me`/**đổi mật khẩu tự phục vụ**), CRUD Donor/Donation/Hospital/BloodUnit/BloodRequest, Notification (CRUD + gửi + đánh dấu đã đọc), Banner (CRUD), User management (ADMIN), BloodRequest duyệt + điều phối tự động (`PUT /:id/decision`) + xác nhận nhận (`PUT /:id/receive`).
 
-**Khép luồng HOSPITAL ⇄ CENTRAL:** trước đây chỉ CENTRAL mới đổi được status BloodUnit, nên khi bệnh viện tuyến dưới thực sự dùng máu, CENTRAL không có cách nào biết. Giờ có `PUT /blood-units/:id/use` (HOSPITAL, chỉ áp dụng đơn vị đang RECEIVED tại đúng bệnh viện mình) — tự chuyển status = USED và **thông báo cho cả DONOR lẫn mọi tài khoản CENTRAL** (`notifyCentralOfBloodUnitUsed`).
+**Kho máu cho HOSPITAL**: `GET /blood-units` tự lọc theo bệnh viện, có phân trang thật + lọc theo `status`/`bloodGroup`/`donationType`. `GET /blood-units/summary` dùng MongoDB aggregation, tổng hợp theo nhóm máu + **loại chế phẩm** + trạng thái để không gộp lẫn máu toàn phần với tiểu cầu/huyết tương.
 
-**Gộp quy trình Donation + BloodUnit (tối ưu nghiệp vụ):** trước đây CENTRAL phải tạo Donation rồi tạo BloodUnit ở 2 trang riêng, tự gõ lại nhóm máu (dễ nhầm giữa nhiều người hiến). Giờ `POST /api/donations` tạo cả 2 trong 1 lần gọi — nhóm máu BloodUnit LUÔN lấy tự động từ hồ sơ Donor, mã đơn vị tự sinh nếu không nhập. Đồng thời thêm `donationType` (Toàn phần/Tiểu cầu/Huyết tương), mỗi loại có số ngày chờ tối thiểu khác nhau trước khi hiến lại (`DONATION_WAITING_DAYS` trong `utils/constants.js` — giá trị tham khảo, nên đối chiếu hướng dẫn y khoa thật khi triển khai thực tế). Sau khi ghi nhận, hệ thống tự gửi thông báo cảm ơn kèm ngày có thể hiến lại cho DONOR.
+**Hồ sơ cá nhân cho DONOR**: `GET /donors/me`. **Hành trình đơn vị máu theo lần hiến**: `GET /blood-units/for-donation/:donationId`. Kết quả xét nghiệm + trạng thái DISCARDED, khoa sử dụng, lịch sử ngày từng bước (`statusHistory`), và thông báo tự động cho DONOR mỗi khi đơn vị máu từ lần hiến của họ đổi trạng thái — xem `src/utils/notifyDonor.js`.
 
-**Sửa 3 vấn đề về tồn kho BloodUnit:**
-1. *Thống kê lẫn đơn vị đã USED* — `GET /blood-units/summary` giờ trả về số lượng theo từng cặp (nhóm máu, trạng thái), frontend tự tách "còn dùng được" (RECEIVED/STORED) khỏi các trạng thái khác thay vì gộp chung 1 con số.
-2. *HOSPITAL phải qua CENTRAL cho mọi việc* — thêm `PUT /blood-units/:id/discard` (HOSPITAL tự huỷ đơn vị gặp sự cố tại viện - hết hạn, hư hỏng khi vận chuyển - không cần CENTRAL xử lý hộ, vẫn tự động báo cho CENTRAL biết).
-3. *Không chịu được kho lớn (>1000 đơn vị)* — `GET /blood-units` giờ có phân trang thật ở tầng DB (`page`, `limit`, `search`, tối đa 200 bản ghi/lần thay vì tải hết); `GET /blood-units/summary` dùng MongoDB aggregation (`$group`) để tính tổng theo nhóm máu/trạng thái ngay ở database, không phải tải toàn bộ record về rồi cộng bằng JavaScript.
+**Khép luồng HOSPITAL ⇄ CENTRAL**: `PUT /blood-units/:id/use` (HOSPITAL, chỉ áp dụng đơn vị đang RECEIVED tại đúng bệnh viện mình) — tự chuyển status = USED và thông báo cho cả DONOR lẫn mọi tài khoản CENTRAL. `PUT /blood-units/:id/discard` (HOSPITAL tự huỷ đơn vị gặp sự cố tại viện, vẫn tự động báo cho CENTRAL).
+
+**Gộp quy trình Donation + BloodUnit**: `POST /api/donations` tạo cả Donation và BloodUnit trong 1 lần gọi — nhóm máu VÀ loại chế phẩm của BloodUnit luôn lấy tự động từ Donor/Donation, mã đơn vị tự sinh nếu không nhập.
 
 ## Test bằng Postman
 
-Import file `BloodDonation_Week3.postman_collection.json` vào Postman. Chạy lần lượt theo thứ tự folder (00 → 06) — các request Login/Register/Create đã có script tự lưu token và ID vào collection variables để các request sau dùng lại, không cần copy tay (trừ 2 chỗ đã đánh dấu `__PASTE_..._ID__` cần điền tay vì phụ thuộc dữ liệu seed).
+Import file `BloodDonation_Week3.postman_collection.json` vào Postman. Chạy lần lượt theo thứ tự folder.

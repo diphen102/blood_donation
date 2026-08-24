@@ -149,12 +149,6 @@ export default function DonationPage() {
         cancelText="Huỷ"
         destroyOnClose
       >
-        {/* <Alert
-          type="info"
-          showIcon
-          style={{ marginBottom: 16 }}
-          message="Hệ thống sẽ tự tạo 1 đơn vị máu tương ứng ngay sau khi ghi nhận — không cần thao tác thêm ở trang Đơn vị máu."
-        /> */}
         <Form form={createForm} layout="vertical">
           <Form.Item name="donorId" label="Người hiến máu" rules={[{ required: true }]}>
             <Select options={donorOptions} showSearch optionFilterProp="label" />

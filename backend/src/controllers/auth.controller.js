@@ -18,7 +18,6 @@ function signToken(user) {
 }
 
 // POST /api/auth/register
-// FR-01 + Mô hình nghiệp vụ 4.1: Đăng ký / Liên kết CCCD
 // Body: { username, password, cccd, phone }
 const register = asyncHandler(async (req, res) => {
   const { username, password, cccd, phone } = req.body;
@@ -32,13 +31,11 @@ const register = asyncHandler(async (req, res) => {
     return res.status(409).json({ message: "Username đã tồn tại." });
   }
 
-  // Bước 1: tìm Donor theo CCCD (mục 4.1 - sơ đồ "Tìm thấy Donor theo CCCD?")
   const donor = await Donor.findOne({ cccd });
 
   let donorId = null;
   let linked = false;
 
-  // Bước 2: nếu tìm thấy, kiểm tra SĐT có khớp không (sơ đồ "SĐT khớp?")
   if (donor && donor.phone === phone) {
     donorId = donor._id;
     linked = true;
@@ -102,14 +99,12 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
-// GET /api/auth/me  (kiểm tra nhanh token còn sống + thông tin user hiện tại)
+// GET /api/auth/me
 const me = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
   if (!user) {
     return res.status(404).json({ message: "Không tìm thấy user." });
   }
-  // Trả về đúng shape giống hệt response của /login, để frontend không cần phân biệt
-  // 2 nguồn dữ liệu user khác nhau (tránh lệch field id/_id).
   return res.status(200).json({
     id: user._id,
     username: user.username,
@@ -120,4 +115,28 @@ const me = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, me };
+// PUT /api/auth/change-password (mọi role tự đổi mật khẩu của chính mình)
+// Body: { oldPassword, newPassword }
+// Tách biệt với chức năng ADMIN reset mật khẩu tạm cho người khác (user.controller.js resetPassword).
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ message: "Thiếu oldPassword hoặc newPassword." });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: "Mật khẩu mới phải từ 6 ký tự trở lên." });
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: "Không tìm thấy user." });
+
+  const match = await bcrypt.compare(oldPassword, user.password);
+  if (!match) return res.status(401).json({ message: "Mật khẩu hiện tại không đúng." });
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  res.status(200).json({ message: "Đã đổi mật khẩu thành công." });
+});
+
+module.exports = { register, login, me, changePassword };

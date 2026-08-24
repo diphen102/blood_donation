@@ -1,12 +1,13 @@
 {
   "name": "blood-donation-backend",
   "version": "1.0.0",
-  "description": "Backend API - He thong Quan ly Hien mau va Cham soc Nguoi hien mau (Tuan 3: Backend + Database)",
+  "description": "Backend API - He thong Quan ly Hien mau va Cham soc Nguoi hien mau",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "backfill:donation-type": "node scripts/backfillDonationType.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

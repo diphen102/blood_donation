@@ -9,7 +9,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { useAuth } from "../context/AuthContext";
 import { donorApi, donationApi, hospitalApi, bloodUnitApi, bloodRequestApi, notificationApi } from "../api/resourceApis";
 import { STATUS_STEPS } from "../constants/bloodUnitStatus";
-import { computeNextEligibleDate } from "../constants/donationType";
+import { computeNextEligibleDate, DONATION_TYPE_LABELS } from "../constants/donationType";
 import { summarizeFromAggregation } from "../utils/hospitalInventory";
 
 const CHART_COLORS = ["#8E2430", "#39597A", "#2F7D4F", "#B4790A", "#5B4B8A", "#3C7A78", "#8A3F5B", "#5B6270"];
@@ -21,6 +21,14 @@ function groupCount(list, field) {
     map[key] = (map[key] || 0) + 1;
   });
   return Object.entries(map).map(([name, value]) => ({ name, value }));
+}
+
+// Cộng dồn 1 field (available/total) qua toàn bộ map lồng { bloodGroup: { donationType: {...} } }
+function sumNested(inventoryByGroup, field) {
+  return Object.values(inventoryByGroup || {}).reduce(
+    (sum, byType) => sum + Object.values(byType).reduce((s, v) => s + v[field], 0),
+    0
+  );
 }
 
 function CentralDashboard() {
@@ -36,12 +44,17 @@ function CentralDashboard() {
       bloodUnitApi.summary(),
       bloodRequestApi.list({ status: "PENDING" }),
     ]).then(([donors, donations, hospitals, unitSummary, pending]) => {
+      // unitSummary.data: { bloodGroup: { donationType: { status: count } } } -
+      // gộp cả loại chế phẩm lại để ra tổng quan theo trạng thái (biểu đồ tổng quan không cần
+      // tách nhỏ theo loại, chỉ trang "Đơn vị máu" chi tiết mới cần tách).
       const statusTotals = {};
       let bloodUnitsTotal = 0;
-      Object.values(unitSummary.data).forEach((byStatus) => {
-        Object.entries(byStatus).forEach(([status, count]) => {
-          statusTotals[status] = (statusTotals[status] || 0) + count;
-          bloodUnitsTotal += count;
+      Object.values(unitSummary.data).forEach((byType) => {
+        Object.values(byType).forEach((byStatus) => {
+          Object.entries(byStatus).forEach(([status, count]) => {
+            statusTotals[status] = (statusTotals[status] || 0) + count;
+            bloodUnitsTotal += count;
+          });
         });
       });
 
@@ -127,8 +140,8 @@ function HospitalDashboard() {
 
   const pending = requests.filter((r) => r.status === "PENDING").length;
   const approved = requests.filter((r) => r.status === "APPROVED").length;
-  const receivedAwaitingUse = Object.values(inventoryByGroup).reduce((sum, g) => sum + g.available, 0);
-  const totalAtHospital = Object.values(inventoryByGroup).reduce((sum, g) => sum + g.total, 0);
+  const receivedAwaitingUse = sumNested(inventoryByGroup, "available");
+  const totalAtHospital = sumNested(inventoryByGroup, "total");
   const byStatus = groupCount(requests, "status");
 
   return (
@@ -152,13 +165,17 @@ function HospitalDashboard() {
               <Typography.Text type="secondary">Hiện không còn đơn vị máu nào sẵn sàng sử dụng (đã dùng hết hoặc đang chờ điều phối).</Typography.Text>
             ) : (
               <Row gutter={12}>
-                {Object.entries(inventoryByGroup)
-                  .filter(([, { available }]) => available > 0)
-                  .map(([group, { available }]) => (
-                    <Col key={group}>
-                      <Tag color="#8E2430" style={{ fontSize: 14, padding: "4px 12px" }}>{group}: {available}</Tag>
-                    </Col>
-                  ))}
+                {Object.entries(inventoryByGroup).flatMap(([group, byType]) =>
+                  Object.entries(byType)
+                    .filter(([, { available }]) => available > 0)
+                    .map(([type, { available }]) => (
+                      <Col key={`${group}-${type}`}>
+                        <Tag color="#8E2430" style={{ fontSize: 14, padding: "4px 12px" }}>
+                          {group} · {DONATION_TYPE_LABELS[type] || type}: {available}
+                        </Tag>
+                      </Col>
+                    ))
+                )}
               </Row>
             )}
             <Typography.Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 8 }}>

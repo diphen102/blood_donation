@@ -60,23 +60,25 @@ async function seed() {
 
   const d = (y, m, day) => new Date(y, m - 1, day);
 
+  // donationType của mỗi BloodUnit LUÔN khớp với donationType của Donation gốc tương ứng
+  // (đúng theo cách createDonation ở donation.controller.js tự gán) - dữ liệu mẫu phải nhất quán.
   await BloodUnit.create([
-    { code: "BU-0001", bloodGroup: "O+", volume: 350, status: "STORED", donationId: donations[0]._id,
+    { code: "BU-0001", bloodGroup: "O+", volume: 350, donationType: "WHOLE_BLOOD", status: "STORED", donationId: donations[0]._id,
       statusHistory: [{ status: "COLLECTED", date: d(2026, 6, 1) }, { status: "TESTED", date: d(2026, 6, 2) }, { status: "STORED", date: d(2026, 6, 3) }] },
-    { code: "BU-0002", bloodGroup: "O+", volume: 350, status: "STORED", donationId: donations[2]._id,
+    { code: "BU-0002", bloodGroup: "O+", volume: 350, donationType: "WHOLE_BLOOD", status: "STORED", donationId: donations[2]._id,
       statusHistory: [{ status: "COLLECTED", date: d(2026, 6, 15) }, { status: "TESTED", date: d(2026, 6, 16) }, { status: "STORED", date: d(2026, 6, 17) }] },
-    { code: "BU-0003", bloodGroup: "O+", volume: 350, status: "STORED", donationId: donations[4]._id,
+    { code: "BU-0003", bloodGroup: "O+", volume: 350, donationType: "WHOLE_BLOOD", status: "STORED", donationId: donations[4]._id,
       statusHistory: [{ status: "COLLECTED", date: d(2026, 7, 20) }, { status: "TESTED", date: d(2026, 7, 21) }, { status: "STORED", date: d(2026, 7, 22) }] },
-    { code: "BU-0004", bloodGroup: "A+", volume: 350, status: "TESTED", donationId: donations[1]._id,
+    { code: "BU-0004", bloodGroup: "A+", volume: 250, donationType: "PLATELET", status: "TESTED", donationId: donations[1]._id,
       statusHistory: [{ status: "COLLECTED", date: d(2026, 6, 10) }, { status: "TESTED", date: d(2026, 6, 11) }] },
-    { code: "BU-0005", bloodGroup: "B+", volume: 350, status: "COLLECTED", donationId: donations[3]._id,
+    { code: "BU-0005", bloodGroup: "B+", volume: 300, donationType: "PLASMA", status: "COLLECTED", donationId: donations[3]._id,
       statusHistory: [{ status: "COLLECTED", date: d(2026, 7, 1) }] },
-    { code: "BU-0006", bloodGroup: "O+", volume: 350, status: "USED", currentHospital: bvDaNang._id, department: "Khoa Cấp cứu", donationId: donations[0]._id,
+    { code: "BU-0006", bloodGroup: "O+", volume: 350, donationType: "WHOLE_BLOOD", status: "USED", currentHospital: bvDaNang._id, department: "Khoa Cấp cứu", donationId: donations[0]._id,
       statusHistory: [
         { status: "COLLECTED", date: d(2026, 6, 1) }, { status: "TESTED", date: d(2026, 6, 2) }, { status: "STORED", date: d(2026, 6, 3) },
         { status: "DISPATCHED", date: d(2026, 7, 5) }, { status: "RECEIVED", date: d(2026, 7, 6) }, { status: "USED", date: d(2026, 7, 8) },
       ] },
-    { code: "BU-0007", bloodGroup: "B+", volume: 350, status: "DISCARDED", donationId: donations[3]._id,
+    { code: "BU-0007", bloodGroup: "B+", volume: 300, donationType: "PLASMA", status: "DISCARDED", donationId: donations[3]._id,
       testResult: "FAILED", testFailReason: "Dương tính viêm gan B", testRecommendation: "Khuyến nghị khám lại gấp",
       statusHistory: [{ status: "COLLECTED", date: d(2026, 7, 1) }, { status: "TESTED", date: d(2026, 7, 2) }, { status: "DISCARDED", date: d(2026, 7, 2) }] },
   ]);
@@ -107,7 +109,7 @@ async function seed() {
   ]);
 
   console.log("Đã tạo dữ liệu mẫu/demo:");
-  console.log(`- ${donors.length} Donor, ${hospitals.length} Hospital, ${donations.length} Donation, 6 BloodUnit, 2 BloodRequest, 2 Notification, 2 Banner`);
+  console.log(`- ${donors.length} Donor, ${hospitals.length} Hospital, ${donations.length} Donation, 7 BloodUnit, 2 BloodRequest, 2 Notification, 2 Banner`);
   console.log("- Users (mật khẩu chung 123456):", users.map((u) => `${u.username} (${u.role})`).join(", "));
 
   process.exit(0);

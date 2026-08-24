@@ -4,8 +4,6 @@ import { PlusOutlined, KeyOutlined, CopyOutlined } from "@ant-design/icons";
 import { userApi, hospitalApi } from "../../api/resourceApis";
 
 const ROLE_OPTIONS = ["ADMIN", "CENTRAL", "HOSPITAL"].map((v) => ({ value: v, label: v }));
-// DONOR không tạo qua đây - tự đăng ký qua trang /register (liên kết CCCD).
-// Vẫn hiện trong bảng dưới để ADMIN xem/khoá/đặt lại mật khẩu như mọi tài khoản khác.
 const ALL_ROLES = ["ADMIN", "CENTRAL", "HOSPITAL", "DONOR"];
 
 export default function UserPage() {
@@ -13,7 +11,7 @@ export default function UserPage() {
   const [loading, setLoading] = useState(false);
   const [hospitalOptions, setHospitalOptions] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [resetResult, setResetResult] = useState(null); // { username, tempPassword }
+  const [resetResult, setResetResult] = useState(null);
   const [form] = Form.useForm();
 
   function load() {
@@ -96,13 +94,6 @@ export default function UserPage() {
         <Typography.Title level={3} style={{ margin: 0 }}>Quản lý tài khoản</Typography.Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>Tạo tài khoản</Button>
       </div>
-
-      {/* <Alert
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-        message="Tài khoản DONOR tự đăng ký qua trang Đăng ký (liên kết CCCD), không tạo tay ở đây — nhưng vẫn quản lý được (khoá/mở, đặt lại mật khẩu) như mọi tài khoản khác trong bảng dưới. Lọc cột Vai trò = DONOR để xem riêng."
-      /> */}
 
       <Table rowKey="_id" columns={columns} dataSource={data} loading={loading} scroll={{ x: "max-content" }} pagination={{ pageSize: 10 }} />
 

@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, NodeIndexOutlined, SearchOu
 import { bloodUnitApi, hospitalApi, donationApi } from "../../api/resourceApis";
 import { ALL_STATUS_OPTIONS } from "../../constants/bloodUnitStatus";
 import { TEST_FAIL_REASONS, TEST_RECOMMENDATIONS } from "../../constants/testResult";
+import { DONATION_TYPE_LABELS, DONATION_TYPE_OPTIONS } from "../../constants/donationType";
 import BloodUnitJourney from "../../components/BloodUnitJourney";
 
 const BLOOD_GROUP_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((v) => ({ value: v, label: v }));
@@ -16,6 +17,7 @@ export default function BloodUnitPage() {
   const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState(undefined);
   const [bloodGroupFilter, setBloodGroupFilter] = useState(undefined);
+  const [donationTypeFilter, setDonationTypeFilter] = useState(undefined);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +32,7 @@ export default function BloodUnitPage() {
   function load() {
     setLoading(true);
     bloodUnitApi
-      .list({ page, limit: pageSize, status: statusFilter, bloodGroup: bloodGroupFilter, search: searchText || undefined })
+      .list({ page, limit: pageSize, status: statusFilter, bloodGroup: bloodGroupFilter, donationType: donationTypeFilter, search: searchText || undefined })
       .then((res) => {
         setData(res.data.items);
         setTotal(res.data.total);
@@ -42,7 +44,7 @@ export default function BloodUnitPage() {
     bloodUnitApi.summary().then((res) => setSummary(res.data));
   }
 
-  useEffect(load, [page, pageSize, statusFilter, bloodGroupFilter, searchText]);
+  useEffect(load, [page, pageSize, statusFilter, bloodGroupFilter, donationTypeFilter, searchText]);
   useEffect(() => {
     loadSummary();
     hospitalApi.list().then((res) => setHospitalOptions(res.data.map((h) => ({ value: h._id, label: h.name }))));
@@ -113,6 +115,7 @@ export default function BloodUnitPage() {
     setPageSize(pagination.pageSize);
     setStatusFilter(filters.status?.[0]);
     setBloodGroupFilter(filters.bloodGroup?.[0]);
+    setDonationTypeFilter(filters.donationType?.[0]);
   }
 
   function handleSearch(value) {
@@ -126,6 +129,12 @@ export default function BloodUnitPage() {
       title: "Nhóm máu", dataIndex: "bloodGroup",
       filters: BLOOD_GROUP_OPTIONS.map((o) => ({ text: o.label, value: o.value })),
       filterMultiple: false,
+    },
+    {
+      title: "Loại hiến", dataIndex: "donationType",
+      filters: DONATION_TYPE_OPTIONS.map((o) => ({ text: o.label, value: o.value })),
+      filterMultiple: false,
+      render: (t) => DONATION_TYPE_LABELS[t] || t,
     },
     { title: "Thể tích (ml)", dataIndex: "volume" },
     {
@@ -156,10 +165,15 @@ export default function BloodUnitPage() {
     },
   ];
 
+  // summary: { bloodGroup: { donationType: { status: count } } } - tách theo cả nhóm máu và loại chế phẩm
   const availableByGroup = summary
-    ? Object.entries(summary).map(([group, byStatus]) => [group, byStatus.STORED || 0]).filter(([, n]) => n > 0)
+    ? Object.entries(summary).flatMap(([group, byType]) =>
+        Object.entries(byType)
+          .map(([type, byStatus]) => [group, type, byStatus.STORED || 0])
+          .filter(([, , n]) => n > 0)
+      )
     : [];
-  const availableTotal = availableByGroup.reduce((sum, [, n]) => sum + n, 0);
+  const availableTotal = availableByGroup.reduce((sum, [, , n]) => sum + n, 0);
 
   return (
     <div>
@@ -175,9 +189,11 @@ export default function BloodUnitPage() {
           <Typography.Text type="secondary">Hiện chưa có đơn vị máu nào ở trạng thái STORED.</Typography.Text>
         ) : (
           <Row gutter={[12, 8]}>
-            {availableByGroup.map(([group, count]) => (
-              <Col key={group}>
-                <Tag color="#8E2430" style={{ fontSize: 14, padding: "4px 12px" }}>{group}: {count} đơn vị</Tag>
+            {availableByGroup.map(([group, type, count]) => (
+              <Col key={`${group}-${type}`}>
+                <Tag color="#8E2430" style={{ fontSize: 14, padding: "4px 12px" }}>
+                  {group} · {DONATION_TYPE_LABELS[type] || type}: {count} đơn vị
+                </Tag>
               </Col>
             ))}
             <Col><Tag style={{ fontSize: 14, padding: "4px 12px" }}>Tổng: {availableTotal} đơn vị</Tag></Col>
@@ -214,19 +230,22 @@ export default function BloodUnitPage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical">
-          {!editingRecord && (
+          {/* {!editingRecord && (
             <Alert
               type="warning"
               showIcon
               style={{ marginBottom: 16 }}
               message="Thông thường không cần thêm thủ công ở đây — khi ghi nhận 1 lần hiến máu ở trang Lịch sử hiến máu, hệ thống đã tự tạo đơn vị máu tương ứng. Chỉ dùng form này cho trường hợp đặc biệt (VD: nhập bù dữ liệu cũ)."
             />
-          )}
+          )} */}
           <Form.Item name="code" label="Mã đơn vị máu" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
           <Form.Item name="bloodGroup" label="Nhóm máu" rules={[{ required: true }]}>
             <Select options={BLOOD_GROUP_OPTIONS} />
+          </Form.Item>
+          <Form.Item name="donationType" label="Loại hiến máu" initialValue="WHOLE_BLOOD">
+            <Select options={DONATION_TYPE_OPTIONS} />
           </Form.Item>
           <Form.Item name="volume" label="Thể tích (ml)" rules={[{ required: true }]}>
             <InputNumber style={{ width: "100%" }} />

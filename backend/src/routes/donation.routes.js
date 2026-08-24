@@ -14,10 +14,8 @@ const router = express.Router();
 
 router.use(authenticate);
 
-// FR-04: DONOR xem lịch sử hiến máu của chính mình
 router.get("/mine", authorize("DONOR"), getMyDonations);
 
-// FR-08: CENTRAL quản lý Donation
 router.get("/", authorize("CENTRAL"), getDonations);
 router.get("/:id", authorize("CENTRAL"), getDonationById);
 router.post("/", authorize("CENTRAL"), createDonation);

@@ -2,8 +2,8 @@ const ROLES = ["ADMIN", "CENTRAL", "HOSPITAL", "DONOR"];
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-// Vòng đời BloodUnit (đúng thứ tự - mục 4.4 báo cáo tuần 2)
-// DISCARDED: nhánh riêng khi xét nghiệm không đạt (mục 4.2 - "Huỷ đơn vị máu"), không nằm trong luồng chính.
+// Vòng đời BloodUnit (đúng thứ tự)
+// DISCARDED: nhánh riêng khi xét nghiệm không đạt, không nằm trong luồng chính ở trên
 const BLOOD_UNIT_STATUS = [
   "COLLECTED",
   "TESTED",
@@ -16,7 +16,6 @@ const BLOOD_UNIT_STATUS = [
 
 const TEST_RESULTS = ["PASSED", "FAILED"];
 
-// Danh sách gợi ý cho frontend (không ép enum ở backend vì cho phép CENTRAL tự nhập thêm lý do/khuyến nghị khác)
 const TEST_FAIL_REASONS_SUGGESTED = [
   "Dương tính viêm gan B",
   "Dương tính viêm gan C",
@@ -34,8 +33,6 @@ const TEST_RECOMMENDATIONS_SUGGESTED = [
 const BLOOD_REQUEST_STATUS = ["PENDING", "APPROVED", "REJECTED", "COMPLETED"];
 
 // Loại hiến máu - mỗi loại có thời gian chờ tối thiểu trước khi hiến lại khác nhau.
-// Số ngày dưới đây là giá trị tham khảo phổ biến, KHÔNG phải tư vấn y khoa chính thức -
-// CENTRAL nên đối chiếu với hướng dẫn của Viện Huyết học / Bộ Y tế khi triển khai thực tế.
 const DONATION_TYPES = ["WHOLE_BLOOD", "PLATELET", "PLASMA"];
 const DONATION_TYPE_LABELS = {
   WHOLE_BLOOD: "Toàn phần",

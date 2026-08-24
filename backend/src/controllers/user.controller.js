@@ -4,13 +4,13 @@ const crypto = require("crypto");
 const asyncHandler = require("../utils/asyncHandler");
 const { ROLES } = require("../utils/constants");
 
-// GET /api/users  (ADMIN - FR-20)
+// GET /api/users (ADMIN)
 const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select("-password").populate("hospitalId", "name").sort({ createdAt: -1 });
   res.status(200).json(users);
 });
 
-// POST /api/users  (ADMIN tạo tài khoản CENTRAL/HOSPITAL/ADMIN - FR-20)
+// POST /api/users (ADMIN tạo tài khoản CENTRAL/HOSPITAL/ADMIN)
 // DONOR tự đăng ký qua /api/auth/register, không tạo qua đây.
 const createUser = asyncHandler(async (req, res) => {
   const { username, password, role, hospitalId } = req.body;
@@ -35,7 +35,7 @@ const createUser = asyncHandler(async (req, res) => {
   res.status(201).json(safeUser);
 });
 
-// PUT /api/users/:id/toggle-active  (FR-20 - khoá / mở khoá tài khoản)
+// PUT /api/users/:id/toggle-active
 const toggleActive = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) return res.status(404).json({ message: "Không tìm thấy user." });
@@ -45,7 +45,7 @@ const toggleActive = asyncHandler(async (req, res) => {
   res.status(200).json({ id: user._id, isActive: user.isActive });
 });
 
-// PUT /api/users/:id/role  (FR-21 - phân quyền vai trò)
+// PUT /api/users/:id/role
 const updateRole = asyncHandler(async (req, res) => {
   const { role, hospitalId } = req.body;
   if (!ROLES.includes(role)) {
@@ -62,17 +62,13 @@ const updateRole = asyncHandler(async (req, res) => {
   res.status(200).json(safeUser);
 });
 
-// PUT /api/users/:id/reset-password  (ADMIN - FR-20)
-// Hệ thống chưa có kênh xác thực OTP/SMS/Email để tự động cho người dùng tự đặt lại mật khẩu,
-// nên dùng giải pháp thay thế: ADMIN xác nhận danh tính người dùng ngoài hệ thống (gọi điện,
-// gặp trực tiếp...) rồi bấm đặt lại — hệ thống tự sinh 1 mật khẩu tạm, ADMIN đọc/báo lại cho
-// người dùng, người dùng nên tự đổi mật khẩu sau khi đăng nhập lại (chưa có màn đổi mật khẩu
-// tự phục vụ - xem ghi chú trong response).
+// PUT /api/users/:id/reset-password (ADMIN - reset mật khẩu tạm cho NGƯỜI KHÁC,
+// khác với /api/auth/change-password là người dùng tự đổi mật khẩu của chính mình)
 const resetPassword = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) return res.status(404).json({ message: "Không tìm thấy user." });
 
-  const tempPassword = crypto.randomBytes(4).toString("hex"); // 8 ký tự, dễ đọc để báo qua điện thoại
+  const tempPassword = crypto.randomBytes(4).toString("hex");
   user.password = await bcrypt.hash(tempPassword, 10);
   await user.save();
 

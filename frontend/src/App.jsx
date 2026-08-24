@@ -34,13 +34,11 @@ export default function App() {
           >
             <Route index element={<Dashboard />} />
 
-            {/* Tuần 4: 4 module CRUD chỉ dành cho CENTRAL theo đúng phạm vi đã chốt */}
             <Route path="donors" element={<PrivateRoute allowedRoles={["CENTRAL"]}><DonorPage /></PrivateRoute>} />
             <Route path="donations" element={<PrivateRoute allowedRoles={["CENTRAL"]}><DonationPage /></PrivateRoute>} />
             <Route path="hospitals" element={<PrivateRoute allowedRoles={["CENTRAL"]}><HospitalPage /></PrivateRoute>} />
             <Route path="blood-units" element={<PrivateRoute allowedRoles={["CENTRAL", "HOSPITAL"]}><BloodUnitRoute /></PrivateRoute>} />
 
-            {/* Tuần 5: chức năng đặc trưng */}
             <Route path="blood-requests" element={<PrivateRoute allowedRoles={["CENTRAL", "HOSPITAL"]}><BloodRequestPage /></PrivateRoute>} />
             <Route path="notifications" element={<PrivateRoute allowedRoles={["CENTRAL"]}><NotificationPage /></PrivateRoute>} />
             <Route path="banners" element={<PrivateRoute allowedRoles={["CENTRAL"]}><BannerPage /></PrivateRoute>} />

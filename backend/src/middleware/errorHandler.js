@@ -2,19 +2,16 @@
 function errorHandler(err, req, res, next) {
   console.error(err);
 
-  // Lỗi trùng khoá duy nhất (unique) của MongoDB
   if (err.code === 11000) {
     const field = Object.keys(err.keyPattern || {})[0] || "field";
     return res.status(409).json({ message: `Giá trị của '${field}' đã tồn tại.` });
   }
 
-  // Lỗi validate của Mongoose
   if (err.name === "ValidationError") {
     const messages = Object.values(err.errors).map((e) => e.message);
     return res.status(400).json({ message: messages.join("; ") });
   }
 
-  // Lỗi ObjectId sai định dạng
   if (err.name === "CastError") {
     return res.status(400).json({ message: `ID không hợp lệ: ${err.value}` });
   }

@@ -4,7 +4,7 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "https://blood-donation-9bs0.onrender.com/api" },
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
     { "key": "token_admin", "value": "" },
     { "key": "token_central", "value": "" },
     { "key": "token_hospital", "value": "" },
@@ -91,6 +91,18 @@
             "header": [{ "key": "Authorization", "value": "Bearer {{token_donor}}" }],
             "url": "{{baseUrl}}/auth/me"
           }
+        },
+        {
+          "name": "Change Password (donor)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_donor}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/auth/change-password",
+            "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"123456\",\n  \"newPassword\": \"123456\"\n}" }
+          }
         }
       ]
     },
@@ -166,7 +178,7 @@
           "name": "Create Donation (dùng donorId từ bước seed - donor1)",
           "event": [{ "listen": "test", "script": { "exec": [
             "const data = pm.response.json();",
-            "if (data._id) pm.collectionVariables.set('donationId', data._id);"
+            "if (data.donation && data.donation._id) pm.collectionVariables.set('donationId', data.donation._id);"
           ]}}],
           "request": {
             "method": "POST",
@@ -175,7 +187,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/donations",
-            "body": { "mode": "raw", "raw": "{\n  \"donorId\": \"__PASTE_DONOR_SEED_ID__\",\n  \"donationDate\": \"2026-07-20\",\n  \"location\": \"BVTW Huế\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"donorId\": \"__PASTE_DONOR_SEED_ID__\",\n  \"donationDate\": \"2026-07-20\",\n  \"location\": \"BVTW Huế\",\n  \"donationType\": \"WHOLE_BLOOD\"\n}" }
           }
         },
         {
@@ -187,7 +199,7 @@
           }
         },
         {
-          "name": "My Donations (DONOR - FR-04)",
+          "name": "My Donations (DONOR)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token_donor}}" }],
@@ -281,7 +293,7 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/blood-units",
-            "body": { "mode": "raw", "raw": "{\n  \"code\": \"BU-0001\",\n  \"bloodGroup\": \"O+\",\n  \"volume\": 350,\n  \"donationId\": \"__PASTE_DONATION_ID__\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"BU-0001\",\n  \"bloodGroup\": \"O+\",\n  \"volume\": 350,\n  \"donationType\": \"WHOLE_BLOOD\",\n  \"donationId\": \"__PASTE_DONATION_ID__\"\n}" }
           }
         },
         {
@@ -290,6 +302,14 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
             "url": "{{baseUrl}}/blood-units?status=COLLECTED"
+          }
+        },
+        {
+          "name": "Summary theo nhóm máu + loại chế phẩm + trạng thái",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
+            "url": "{{baseUrl}}/blood-units/summary"
           }
         },
         {
@@ -318,7 +338,7 @@
       "name": "06 - BloodRequest (HOSPITAL tạo, CENTRAL duyệt)",
       "item": [
         {
-          "name": "Create BloodRequest (HOSPITAL - FR-16)",
+          "name": "Create BloodRequest (HOSPITAL)",
           "event": [{ "listen": "test", "script": { "exec": [
             "const data = pm.response.json();",
             "if (data._id) pm.collectionVariables.set('bloodRequestId', data._id);"
@@ -334,7 +354,7 @@
           }
         },
         {
-          "name": "List of my Hospital (FR-17)",
+          "name": "List of my Hospital",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token_hospital}}" }],
@@ -342,7 +362,7 @@
           }
         },
         {
-          "name": "List all (CENTRAL - FR-11)",
+          "name": "List all (CENTRAL)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token_central}}" }],
@@ -350,15 +370,23 @@
           }
         },
         {
-          "name": "Update status -> APPROVED (CENTRAL)",
+          "name": "Decision -> APPROVED (CENTRAL, tự điều phối)",
           "request": {
             "method": "PUT",
             "header": [
               { "key": "Authorization", "value": "Bearer {{token_central}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": "{{baseUrl}}/blood-requests/{{bloodRequestId}}",
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" }
+            "url": "{{baseUrl}}/blood-requests/{{bloodRequestId}}/decision",
+            "body": { "mode": "raw", "raw": "{\n  \"action\": \"APPROVED\"\n}" }
+          }
+        },
+        {
+          "name": "Receive (HOSPITAL xác nhận đã nhận)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_hospital}}" }],
+            "url": "{{baseUrl}}/blood-requests/{{bloodRequestId}}/receive"
           }
         },
         {
@@ -369,8 +397,8 @@
               { "key": "Authorization", "value": "Bearer {{token_hospital}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": "{{baseUrl}}/blood-requests/{{bloodRequestId}}",
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"APPROVED\"\n}" }
+            "url": "{{baseUrl}}/blood-requests/{{bloodRequestId}}/decision",
+            "body": { "mode": "raw", "raw": "{\n  \"action\": \"APPROVED\"\n}" }
           }
         }
       ]

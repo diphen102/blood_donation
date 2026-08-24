@@ -26,7 +26,6 @@ export default function Register() {
     setSubmitting(true);
     try {
       const res = await authApi.register(values);
-      // Đăng ký xong đăng nhập luôn cho người dùng, không bắt quay lại trang Login nhập tay lần nữa.
       setUserFromAuthResponse(res.data);
       message.success(res.data.message || "Đăng ký thành công.");
       navigate("/");

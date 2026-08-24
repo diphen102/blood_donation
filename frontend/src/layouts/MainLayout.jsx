@@ -13,10 +13,12 @@ import {
   SolutionOutlined,
   SettingOutlined,
   MenuOutlined,
+  KeyOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme";
+import ChangePasswordModal from "../components/ChangePasswordModal";
 
 const { Header, Sider, Content } = Layout;
 
@@ -36,7 +38,6 @@ const ROLE_LABEL = { ADMIN: "Quản trị", CENTRAL: "BVTW Huế", HOSPITAL: "B�
 
 const MOBILE_BREAKPOINT = 992;
 
-// Icon chữ thập y tế đơn giản (SVG) thay cho emoji - biểu tượng chuẩn ngành y, không phải trang trí.
 function MedicalCrossIcon({ size = 20, color = "#fff" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -73,6 +74,7 @@ export default function MainLayout() {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < MOBILE_BREAKPOINT);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [changePwOpen, setChangePwOpen] = useState(false);
 
   useEffect(() => {
     function handleResize() {
@@ -97,11 +99,16 @@ export default function MainLayout() {
   );
 
   const userMenu = {
-    items: [{ key: "logout", icon: <LogoutOutlined />, label: "Đăng xuất" }],
+    items: [
+      { key: "change-password", icon: <KeyOutlined />, label: "Đổi mật khẩu" },
+      { key: "logout", icon: <LogoutOutlined />, label: "Đăng xuất" },
+    ],
     onClick: ({ key }) => {
       if (key === "logout") {
         logout();
         navigate("/login");
+      } else if (key === "change-password") {
+        setChangePwOpen(true);
       }
     },
   };
@@ -181,6 +188,8 @@ export default function MainLayout() {
           <Outlet />
         </Content>
       </Layout>
+
+      <ChangePasswordModal open={changePwOpen} onClose={() => setChangePwOpen(false)} />
     </Layout>
   );
 }

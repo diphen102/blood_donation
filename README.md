@@ -47,8 +47,8 @@ npm run dev
 
 | Service | URL |
 |---|---|
-| Backend API | http://localhost:5000 |
-| Frontend | http://localhost:5173 |
+| Backend API |  |
+| Frontend | [http://localhost:5173](https://blood-donation-jet-nine.vercel.app/) |
 
 
 > Mở nhanh cả 2 project cùng lúc trong VS Code bằng file `BloodDonation.code-workspace`.

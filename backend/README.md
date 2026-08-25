@@ -9,15 +9,6 @@ npm install
 cp .env.example .env
 ```
 
-Cấu hình `.env`:
-
-```
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/blood_donation
-JWT_SECRET=<chuỗi bí mật, tự sinh>
-JWT_EXPIRES_IN=7d
-```
-
 ## Chạy
 
 ```bash
@@ -33,7 +24,6 @@ Kiểm tra server: `GET /api/health`
 npm run seed
 ```
 
-Tạo sẵn 6 tài khoản (mật khẩu chung `123456`):
 
 | Username | Vai trò |
 |---|---|

@@ -50,7 +50,6 @@ npm run dev
 | Backend API | http://localhost:5000 |
 | Frontend | http://localhost:5173 |
 
-Tài khoản demo sau khi seed: `central / 123456`. Danh sách đầy đủ ở [`backend/README.md`](backend/README.md).
 
 > Mở nhanh cả 2 project cùng lúc trong VS Code bằng file `BloodDonation.code-workspace`.
 

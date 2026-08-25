@@ -1,62 +1,99 @@
-# Blood Donation Backend
+# Backend
+
+REST API cho hệ thống quản lý hiến máu — Node.js, Express, MongoDB, JWT.
 
 ## Cài đặt
 
 ```bash
-cd backend
 npm install
-cp .env.example .env   # rồi sửa MONGO_URI / JWT_SECRET nếu cần
+cp .env.example .env
+```
+
+Cấu hình `.env`:
+
+```
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/blood_donation
+JWT_SECRET=<chuỗi bí mật, tự sinh>
+JWT_EXPIRES_IN=7d
 ```
 
 ## Chạy
 
 ```bash
-npm run dev      # có nodemon, tự reload
-# hoặc
-npm start
+npm run dev      # nodemon, tự reload khi sửa code
+npm start        # chạy production
 ```
 
-Kiểm tra nhanh: `GET /api/health`.
+Kiểm tra server: `GET /api/health`
 
-## Tạo dữ liệu mẫu để test
+## Dữ liệu mẫu
 
 ```bash
 npm run seed
 ```
 
-Tạo sẵn: 4 Donor, 3 Hospital, và 6 tài khoản (mật khẩu chung `123456`):
+Tạo sẵn 6 tài khoản (mật khẩu chung `123456`):
 
-| username | role |
+| Username | Vai trò |
 |---|---|
-| admin | ADMIN |
-| central | CENTRAL |
-| hospital1 | HOSPITAL (Bệnh viện Đa khoa Đà Nẵng) |
-| hospital2 | HOSPITAL (Bệnh viện Đa khoa Quảng Trị) |
-| donor1 | DONOR (đã liên kết sẵn với Donor mẫu) |
-| donor2 | DONOR (đã liên kết sẵn với Donor mẫu) |
+| `admin` | ADMIN |
+| `central` | CENTRAL |
+| `hospital1` | HOSPITAL — Bệnh viện Đa khoa Đà Nẵng |
+| `hospital2` | HOSPITAL — Bệnh viện Đa khoa Quảng Trị |
+| `donor1`, `donor2` | DONOR (đã liên kết hồ sơ hiến máu) |
 
-Kèm sẵn: 5 Donation, 7 BloodUnit (đủ trạng thái + đủ loại chế phẩm), 2 BloodRequest (PENDING), 2 Notification, 2 Banner.
+Kèm dữ liệu mẫu: Donor, Donation, BloodUnit ở đủ trạng thái, BloodRequest, Notification, Banner.
 
-## Nếu đã có dữ liệu cũ trong MongoDB
+## Cấu trúc thư mục
 
-BloodUnit tạo trước khi thêm field `donationType` sẽ mặc định bị gán `WHOLE_BLOOD` (theo schema default) dù có thể thực ra là tiểu cầu/huyết tương. Chạy 1 lần để vá lại đúng theo `Donation.donationType` gốc:
+```
+src/
+├── config/       Kết nối MongoDB
+├── controllers/  Xử lý logic nghiệp vụ
+├── middleware/   Xác thực JWT, phân quyền theo role
+├── models/       Mongoose schema
+├── routes/       Định tuyến API
+└── utils/        Hằng số, helper dùng chung
+scripts/
+├── seed.js                   Tạo dữ liệu mẫu
+└── backfillDonationType.js   Vá dữ liệu cũ khi thêm field donationType
+```
+
+## API endpoints
+
+| Method | Endpoint | Quyền truy cập |
+|---|---|---|
+| POST | `/api/auth/login` | Công khai |
+| POST | `/api/auth/register` | Công khai |
+| GET | `/api/auth/me` | Đã đăng nhập |
+| PUT | `/api/auth/change-password` | Đã đăng nhập |
+| GET/POST/PUT/DELETE | `/api/donors` | CENTRAL |
+| GET/POST/PUT/DELETE | `/api/donations` | CENTRAL |
+| GET | `/api/donations/mine` | DONOR |
+| GET | `/api/hospitals` | Mọi role đã đăng nhập |
+| POST/PUT/DELETE | `/api/hospitals` | CENTRAL |
+| GET | `/api/blood-units` | CENTRAL, HOSPITAL |
+| GET | `/api/blood-units/summary` | CENTRAL, HOSPITAL |
+| POST/PUT/DELETE | `/api/blood-units` | CENTRAL |
+| PUT | `/api/blood-units/:id/use`, `/discard` | HOSPITAL |
+| GET/POST | `/api/blood-requests` | HOSPITAL, CENTRAL |
+| PUT | `/api/blood-requests/:id/decision` | CENTRAL |
+| PUT | `/api/blood-requests/:id/receive` | HOSPITAL |
+| GET/POST/DELETE | `/api/notifications` | CENTRAL |
+| GET | `/api/notifications/mine` | DONOR |
+| GET | `/api/banners` | Mọi role đã đăng nhập |
+| POST/PUT/DELETE | `/api/banners` | CENTRAL |
+| GET/POST/PUT/DELETE | `/api/users` | ADMIN |
+
+## Bảo trì dữ liệu
+
+Nếu database đã có `BloodUnit` từ trước khi thêm field `donationType`, chạy một lần:
 
 ```bash
 npm run backfill:donation-type
 ```
 
-## Module đã hoàn thành
+## Test API bằng Postman
 
-Auth JWT (đăng ký/đăng nhập/`me`/**đổi mật khẩu tự phục vụ**), CRUD Donor/Donation/Hospital/BloodUnit/BloodRequest, Notification (CRUD + gửi + đánh dấu đã đọc), Banner (CRUD), User management (ADMIN), BloodRequest duyệt + điều phối tự động (`PUT /:id/decision`) + xác nhận nhận (`PUT /:id/receive`).
-
-**Kho máu cho HOSPITAL**: `GET /blood-units` tự lọc theo bệnh viện, có phân trang thật + lọc theo `status`/`bloodGroup`/`donationType`. `GET /blood-units/summary` dùng MongoDB aggregation, tổng hợp theo nhóm máu + **loại chế phẩm** + trạng thái để không gộp lẫn máu toàn phần với tiểu cầu/huyết tương.
-
-**Hồ sơ cá nhân cho DONOR**: `GET /donors/me`. **Hành trình đơn vị máu theo lần hiến**: `GET /blood-units/for-donation/:donationId`. Kết quả xét nghiệm + trạng thái DISCARDED, khoa sử dụng, lịch sử ngày từng bước (`statusHistory`), và thông báo tự động cho DONOR mỗi khi đơn vị máu từ lần hiến của họ đổi trạng thái — xem `src/utils/notifyDonor.js`.
-
-**Khép luồng HOSPITAL ⇄ CENTRAL**: `PUT /blood-units/:id/use` (HOSPITAL, chỉ áp dụng đơn vị đang RECEIVED tại đúng bệnh viện mình) — tự chuyển status = USED và thông báo cho cả DONOR lẫn mọi tài khoản CENTRAL. `PUT /blood-units/:id/discard` (HOSPITAL tự huỷ đơn vị gặp sự cố tại viện, vẫn tự động báo cho CENTRAL).
-
-**Gộp quy trình Donation + BloodUnit**: `POST /api/donations` tạo cả Donation và BloodUnit trong 1 lần gọi — nhóm máu VÀ loại chế phẩm của BloodUnit luôn lấy tự động từ Donor/Donation, mã đơn vị tự sinh nếu không nhập.
-
-## Test bằng Postman
-
-Import file `BloodDonation_Week3.postman_collection.json` vào Postman. Chạy lần lượt theo thứ tự folder.
+Import `BloodDonation_Week3.postman_collection.json`, chạy lần lượt theo thứ tự các folder trong collection.

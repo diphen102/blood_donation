@@ -1,33 +1,55 @@
-# Blood Donation Frontend
+# Frontend
+
+Giao diện quản trị cho hệ thống hiến máu — React, Vite, Ant Design.
 
 ## Cài đặt
 
 ```bash
-cd frontend
 npm install
-cp .env.example .env    # sửa VITE_API_URL nếu backend không chạy ở :5000
+cp .env.example .env
+```
+
+Cấu hình `.env`:
+
+```
+VITE_API_URL=http://localhost:5000/api
 ```
 
 ## Chạy
 
-Yêu cầu backend đang chạy trước.
-
 ```bash
-npm run dev
+npm run dev       # dev server tại http://localhost:5173
+npm run build     # build production vào thư mục dist/
+npm run preview   # xem thử bản build
 ```
 
-Mở `http://localhost:5173`. Đăng nhập bằng tài khoản đã tạo ở bước `npm run seed` bên backend (VD: `central` / `123456`).
+Cần backend đang chạy trước khi khởi động frontend.
 
-## Cập nhật gần nhất
+## Cấu trúc thư mục
 
-- **Đổi mật khẩu tự phục vụ**: menu người dùng (góc trên phải) có mục "Đổi mật khẩu" cho mọi role, gọi `PUT /auth/change-password`.
-- **Tồn kho đơn vị máu tách theo loại chế phẩm**: Dashboard CENTRAL/HOSPITAL và trang "Đơn vị máu" (cả CENTRAL lẫn HOSPITAL) nay hiển thị và lọc riêng máu Toàn phần / Tiểu cầu / Huyết tương trong cùng 1 nhóm máu, thay vì cộng gộp.
+```
+src/
+├── api/          Axios client + hàm gọi API theo resource
+├── components/   Component dùng chung (bảng CRUD, modal, timeline...)
+├── constants/    Enum/label dùng chung với backend
+├── context/      AuthContext quản lý phiên đăng nhập
+├── layouts/      Layout chính (sidebar, header)
+├── pages/        Trang theo từng chức năng, chia theo module
+├── routes/       PrivateRoute kiểm tra đăng nhập & phân quyền
+└── utils/        Hàm xử lý dữ liệu (tổng hợp tồn kho...)
+```
 
-## Phạm vi đã làm
+## Phân quyền theo route
 
-Login, Routing, PrivateRoute, Layout chung, Dashboard đầy đủ cho cả 4 role, CRUD Donor/Donation/Hospital/BloodUnit (CENTRAL), Notification (CENTRAL soạn/gửi), Banner (CENTRAL CRUD), BloodRequest (HOSPITAL tạo + xác nhận nhận, CENTRAL duyệt/từ chối), quản lý tài khoản (ADMIN), tìm kiếm/lọc/pagination nâng cao, biểu đồ thống kê (recharts).
+| Route | Vai trò được truy cập |
+|---|---|
+| `/` | Mọi role (dashboard riêng theo role) |
+| `/donors`, `/donations`, `/hospitals` | CENTRAL |
+| `/blood-units` | CENTRAL, HOSPITAL |
+| `/blood-requests` | CENTRAL, HOSPITAL |
+| `/notifications`, `/banners` | CENTRAL |
+| `/admin/users` | ADMIN |
 
-## Chưa làm
+## Công nghệ
 
-- Kiểm thử thực tế trên môi trường có mạng.
-- Chụp ảnh màn hình cho báo cáo.
+React Router (điều hướng) · Ant Design (UI) · Axios (HTTP client) · Recharts (biểu đồ thống kê) · Day.js (xử lý ngày tháng)

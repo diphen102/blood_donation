@@ -1,43 +1,66 @@
-# Blood Donation Management and Donor Care System
+# 🩸 Blood Donation Management System
 
-Đồ án niên luận — Hệ thống hỗ trợ quản lý hoạt động hiến máu và chăm sóc người hiến máu.
+Hệ thống hỗ trợ quản lý hoạt động hiến máu và kết nối người hiến máu, xây dựng cho **Bệnh viện Trung ương Huế** và mạng lưới bệnh viện tuyến dưới.
 
-## Mở dự án trong VS Code
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
 
-Mở file **`BloodDonation.code-workspace`** bằng VS Code (File → Open Workspace from File...), VS Code sẽ tự load cả 2 thư mục `backend/` và `frontend/` cùng lúc trong 1 cửa sổ, kèm gợi ý cài extension hữu ích (ESLint, Prettier, MongoDB, REST Client).
+## Giới thiệu
 
-Nếu không dùng file workspace, có thể mở trực tiếp thư mục gốc này như 1 project bình thường.
+Hệ thống kết nối 4 nhóm người dùng trong quy trình hiến máu và điều phối máu:
 
-## Cấu trúc
+- **DONOR** — người hiến máu: đăng ký/liên kết CCCD, tra cứu lịch sử hiến máu và hành trình túi máu, nhận thông báo.
+- **CENTRAL** — Bệnh viện Trung ương Huế: ghi nhận lượt hiến, quản lý xét nghiệm & kho máu, duyệt và điều phối yêu cầu cấp phát (thuật toán FIFO theo hạn dùng).
+- **HOSPITAL** — bệnh viện tuyến dưới: gửi yêu cầu cấp phát máu, xác nhận nhận, đánh dấu sử dụng/huỷ đơn vị máu.
+- **ADMIN** — quản trị tài khoản và phân quyền hệ thống.
+
+## Kiến trúc
 
 ```
 .
-├── BloodDonation.code-workspace
-├── backend/     (NodeJS + Express + MongoDB + JWT)
-└── frontend/    (ReactJS + Vite + Ant Design)
+├── backend/     Node.js · Express · MongoDB (Mongoose) · JWT
+└── frontend/    React · Vite · Ant Design
 ```
 
-Chi tiết cài đặt/chạy từng phần xem README.md riêng trong mỗi thư mục.
+Client giao tiếp với server qua REST API, xác thực bằng JWT, phân quyền theo vai trò (RBAC) ở tầng middleware.
 
-## Chạy nhanh cả 2
+## Bắt đầu nhanh
+
+Yêu cầu: Node.js ≥ 18, MongoDB (local hoặc Atlas).
 
 ```bash
-# Terminal 1
-cd backend && npm install && npm run seed && npm run dev
+# 1. Backend
+cd backend
+npm install
+cp .env.example .env      # cấu hình MONGO_URI, JWT_SECRET
+npm run seed               # tạo dữ liệu mẫu
+npm run dev
 
-# Terminal 2
-cd frontend && npm install && npm run dev
+# 2. Frontend (terminal khác)
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-Backend: http://localhost:5000 · Frontend: http://localhost:5173 (đăng nhập `central` / `123456`).
+| Service | URL |
+|---|---|
+| Backend API | http://localhost:5000 |
+| Frontend | http://localhost:5173 |
 
-## Cập nhật gần nhất (sau review)
+Tài khoản demo sau khi seed: `central / 123456`. Danh sách đầy đủ ở [`backend/README.md`](backend/README.md).
 
-- **Đổi mật khẩu tự phục vụ**: `PUT /api/auth/change-password` — mọi role tự đổi mật khẩu của mình, tách biệt với chức năng ADMIN reset mật khẩu tạm cho người khác đã có sẵn.
-- **Tách tồn kho theo loại chế phẩm hiến máu** (Toàn phần / Tiểu cầu / Huyết tương): `BloodUnit` nay có field `donationType` (denormalize từ `Donation.donationType`, giống cách `bloodGroup` đã denormalize từ `Donor`). `GET /blood-units/summary` trả về dạng lồng `{bloodGroup: {donationType: {status: count}}}` thay vì gộp chung theo nhóm máu. Nếu đã có dữ liệu cũ trong MongoDB, chạy `npm run backfill:donation-type` ở `backend/` một lần để vá field này cho các BloodUnit tạo trước thay đổi.
+> Mở nhanh cả 2 project cùng lúc trong VS Code bằng file `BloodDonation.code-workspace`.
 
-## Trạng thái tiến độ
+## Tài liệu chi tiết
 
-- Backend + Database: đã cài đặt.
-- Frontend ReactJS: đã cài đặt.
-- Cần tự chạy trên máy có mạng + MongoDB để test thực tế và chụp ảnh màn hình cho báo cáo.
+- [Backend — API, biến môi trường, seed data](backend/README.md)
+- [Frontend — cấu hình, phân quyền route](frontend/README.md)
+
+## Công nghệ sử dụng
+
+**Backend:** Express, Mongoose, JWT, bcryptjs
+**Frontend:** React, React Router, Ant Design, Axios, Recharts
+**Database:** MongoDB
